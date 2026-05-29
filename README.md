@@ -532,4 +532,3 @@ https://github.com/devbyjunha/techstore-nextjs
 ### `next: command not found`
 
 개발 시에는 **전역 Next.js가 필요 없습니다**. 프로젝트 루트에서 `npm run dev`를 사용하세요 (`package.json`의 `next`가 `node_modules`에서 실행됩니다).
-# techstore-nextjs-template
