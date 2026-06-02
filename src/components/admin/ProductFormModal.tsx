@@ -63,9 +63,10 @@ export default function ProductFormModal({
   const [form, setForm] = useState<ProductFormData>(emptyForm());
 
   useEffect(() => {
-    if (open) {
-      setForm(product ? productToForm(product) : emptyForm());
-    }
+    // Resetting form state when the modal opens is an intentional side effect
+    // tied to the modal lifecycle, not a derived state computation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (open) setForm(product ? productToForm(product) : emptyForm());
   }, [open, product]);
 
   if (!open) return null;

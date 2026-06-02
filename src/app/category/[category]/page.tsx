@@ -1,68 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
-import { Product } from '@/types';
 import { useProducts } from '@/context/ProductsContext';
 
 export default function CategoryPage() {
   const { products } = useProducts();
   const params = useParams();
   const category = params.category as string;
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'rating'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showSaleOnly, setShowSaleOnly] = useState(false);
 
-  // 카테고리명 매핑
-  const categoryMap: { [key: string]: string } = {
-    'laptop': '노트북',
-    'smartphone': '스마트폰',
-    'tablet': '태블릿',
-    'accessory': '액세서리',
-    'earphone': '이어폰',
-    'smartwatch': '스마트워치',
-    'desktop': '데스크톱',
-    'smarthome': '스마트홈'
+  const categoryMap: Record<string, string> = {
+    laptop: '노트북',
+    smartphone: '스마트폰',
+    tablet: '태블릿',
+    accessory: '액세서리',
+    earphone: '이어폰',
+    smartwatch: '스마트워치',
+    desktop: '데스크톱',
+    smarthome: '스마트홈',
   };
 
   const koreanCategory = categoryMap[category] || category;
 
-  useEffect(() => {
-    let filtered = products.filter(product => product.category === koreanCategory);
-    
-    // 특가 상품만 보기 필터
+  const filteredProducts = useMemo(() => {
+    let filtered = products.filter((p) => p.category === koreanCategory);
     if (showSaleOnly) {
-      filtered = filtered.filter(product => product.isOnSale);
+      filtered = filtered.filter((p) => p.isOnSale);
     }
-
-    // 정렬
-    const getSortValue = (product: Product): string | number => {
-      switch (sortBy) {
-        case 'name':
-          return product.name;
-        case 'price':
-          return product.price;
-        case 'rating':
-          return product.rating;
-        default:
-          return product.name;
-      }
-    };
-
-    filtered.sort((a, b) => {
-      const aValue = getSortValue(a);
-      const bValue = getSortValue(b);
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = sortBy === 'name' ? a.name : sortBy === 'price' ? a.price : a.rating;
+      const bv = sortBy === 'name' ? b.name : sortBy === 'price' ? b.price : b.rating;
+      return sortOrder === 'asc' ? (av > bv ? 1 : -1) : av < bv ? 1 : -1;
     });
-
-    setFilteredProducts(filtered);
-  }, [category, koreanCategory, sortBy, sortOrder, showSaleOnly, products]);
+  }, [products, koreanCategory, showSaleOnly, sortBy, sortOrder]);
 
   const handleSortChange = (newSortBy: 'name' | 'price' | 'rating') => {
     if (sortBy === newSortBy) {

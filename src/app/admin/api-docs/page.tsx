@@ -1,21 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, Search } from 'lucide-react';
 import ApiDocCard from '@/components/admin/ApiDocCard';
 import { API_DOC_SECTIONS } from '@/lib/admin/api-docs';
 
 export default function AdminApiDocsPage() {
-  const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
+  const [baseUrl, setBaseUrl] = useState<string>(() =>
+    typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+  );
   const [search, setSearch] = useState('');
   const [demoApiKey, setDemoApiKey] = useState('YOUR_API_KEY');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setBaseUrl(window.location.origin);
-    }
-  }, []);
 
   const filteredSections = useMemo(() => {
     const q = search.toLowerCase().trim();

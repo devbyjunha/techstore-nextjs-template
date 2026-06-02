@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
@@ -33,7 +33,6 @@ const CATEGORIES = [
 export default function GNB() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
@@ -49,22 +48,16 @@ export default function GNB() {
     removeNotification,
   } = useStore();
 
-  useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      const filtered = products
-        .filter(
-          (product) =>
-            product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.category.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .slice(0, 5);
-      setSuggestions(filtered);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  }, [searchQuery]);
+  const suggestions = useMemo<Product[]>(() => {
+    if (!searchQuery.trim()) return [];
+    return products
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .slice(0, 5);
+  }, [searchQuery, products]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -168,7 +161,7 @@ export default function GNB() {
       <input
         type="text"
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(e.target.value.trim().length > 0); }}
         onFocus={() => setShowSuggestions(searchQuery.trim().length > 0)}
         placeholder="상품명, 브랜드, 카테고리로 검색..."
         className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/80 py-3 pl-11 pr-11 text-sm text-slate-800 shadow-sm transition-all placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15"

@@ -113,15 +113,19 @@ export default function ApiTester({
     });
   }, [catalog, categoryFilter, search]);
 
-  const selectedEndpoint = catalog.find((e) => e.id === selectedId);
+  const selectedEndpoint = useMemo(
+    () => catalog.find((e) => e.id === selectedId),
+    [catalog, selectedId]
+  );
+  const sampleQuery = selectedEndpoint?.sampleQuery;
 
   const fullUrl = useMemo(() => {
     try {
-      return buildUrl(endpoint, path, selectedEndpoint?.sampleQuery);
+      return buildUrl(endpoint, path, sampleQuery);
     } catch {
       return `${endpoint}${path}`;
     }
-  }, [endpoint, path, selectedEndpoint?.sampleQuery]);
+  }, [endpoint, path, sampleQuery]);
 
   const applyEndpointSample = useCallback((item: ApiEndpointDefinition) => {
     setMethod(item.method);
@@ -155,35 +159,47 @@ export default function ApiTester({
   );
 
   useEffect(() => {
+    // Restoring persisted API settings from localStorage on mount is an
+    // intentional side effect: the data comes from outside React state and
+    // must be applied after hydration to avoid SSR mismatches.
     if (!catalog.length) return;
 
     const stored = readStoredSettings(storageKey);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored.endpoint) setEndpoint(stored.endpoint);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored.bearerToken) setBearerToken(stored.bearerToken);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored.apiKey) setApiKey(stored.apiKey);
 
     const initialId =
       stored.selectedId && catalog.some((e) => e.id === stored.selectedId)
         ? stored.selectedId
         : catalog[0].id;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedId(initialId);
 
     const item = catalog.find((e) => e.id === initialId);
     const savedBody = stored.requestBodies?.[initialId];
     if (item) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMethod(item.method);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPath(item.path);
       if (savedBody !== undefined) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRequestBody(savedBody);
       } else {
         applyEndpointSample(item);
       }
     }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, [storageKey, catalog, applyEndpointSample]);
 
   useEffect(() => {
+    // Syncing form fields when the user selects a different API endpoint is a
+    // deliberate response to an external selection event, not derived state.
     if (!hydrated || !catalog.length) return;
 
     const item = catalog.find((e) => e.id === selectedId);
@@ -192,9 +208,12 @@ export default function ApiTester({
     const stored = readStoredSettings(storageKey);
     const savedBody = stored.requestBodies?.[selectedId];
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMethod(item.method);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPath(item.path);
     if (savedBody !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRequestBody(savedBody);
     } else {
       applyEndpointSample(item);
@@ -547,7 +566,7 @@ export default function ApiTester({
           <code className="rounded bg-amber-100 px-1">.env.local</code>에{' '}
           <code className="rounded bg-amber-100 px-1">ADMIN_PROXY_INSECURE_TLS=true</code>
           를 넣고 dev 서버를 재시작하세요. Request Body의{' '}
-          <code className="rounded bg-amber-100 px-1">//</code> 주석은 Send 시 자동
+          <code className="rounded bg-amber-100 px-1">{'//'}</code> 주석은 Send 시 자동
           제거됩니다. Braze는 Bearer만 사용하며 본문의 <code className="rounded bg-amber-100 px-1">api_key</code>는
           필요 없습니다.
         </p>

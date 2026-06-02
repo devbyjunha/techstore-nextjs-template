@@ -19,13 +19,18 @@ function ToastItem({ toast, onRemove }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    setIsVisible(true);
+    // Use rAF so the "enter" state flip happens after the initial paint,
+    // which is the standard technique for CSS transition animations.
+    const raf = requestAnimationFrame(() => setIsVisible(true));
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(() => onRemove(toast.id), 300);
     }, toast.duration || 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
   }, [toast.id, toast.duration, onRemove]);
 
   const getIcon = () => {

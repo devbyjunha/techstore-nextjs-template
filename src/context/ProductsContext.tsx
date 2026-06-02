@@ -49,10 +49,14 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
+    // setState in an effect is necessary here: localStorage is not available
+    // on the server, so we must defer the read until after mount to avoid a
+    // Next.js hydration mismatch. This is an accepted SSR hydration pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     const stored = loadFromStorage();
-    if (stored?.length) {
-      setProducts(stored);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (stored?.length) setProducts(stored);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsHydrated(true);
   }, []);
 

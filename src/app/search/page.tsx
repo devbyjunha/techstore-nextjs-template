@@ -1,46 +1,42 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { useProducts } from '@/context/ProductsContext';
 import { Search, X } from 'lucide-react';
 
+function filterProducts(products: ReturnType<typeof useProducts>['products'], q: string) {
+  const lower = q.toLowerCase().trim();
+  if (!lower) return products;
+  return products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(lower) ||
+      p.description.toLowerCase().includes(lower) ||
+      p.category.toLowerCase().includes(lower)
+  );
+}
+
 function SearchPageContent() {
   const { products } = useProducts();
   const searchParams = useSearchParams();
-  const query = searchParams.get('q') || '';
-  const [searchResults, setSearchResults] = useState(products);
-  const [searchQuery, setSearchQuery] = useState(query);
+  const urlQuery = searchParams.get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
+  const [submittedQuery, setSubmittedQuery] = useState(urlQuery);
 
-  useEffect(() => {
-    if (query) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.description.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase())
-      );
-      setSearchResults(filtered);
-    } else {
-      setSearchResults(products);
-    }
-  }, [query, products]);
+  const searchResults = useMemo(
+    () => filterProducts(products, submittedQuery),
+    [products, submittedQuery]
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSearchResults(filtered);
-    }
+    setSubmittedQuery(searchQuery.trim());
   };
 
   const clearSearch = () => {
     setSearchQuery('');
-    setSearchResults(products);
+    setSubmittedQuery('');
   };
 
   return (
@@ -49,10 +45,10 @@ function SearchPageContent() {
         {/* 검색 헤더 */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            {query ? `"${query}" 검색 결과` : '상품 검색'}
+            {submittedQuery ? `"${submittedQuery}" 검색 결과` : '상품 검색'}
           </h1>
           <p className="text-lg text-gray-600">
-            {query ? `${searchResults.length}개의 상품을 찾았습니다` : '찾고 싶은 상품을 검색해보세요'}
+            {submittedQuery ? `${searchResults.length}개의 상품을 찾았습니다` : '찾고 싶은 상품을 검색해보세요'}
           </p>
         </div>
 
@@ -118,7 +114,7 @@ function SearchPageContent() {
         )}
 
         {/* 검색 힌트 */}
-        {query && searchResults.length > 0 && (
+        {submittedQuery && searchResults.length > 0 && (
           <div className="mt-12 text-center">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">검색 팁</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
